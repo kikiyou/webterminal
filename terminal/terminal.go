@@ -1,7 +1,10 @@
 package terminal
 
 import (
+	"fmt"
 	"io"
+	"log"
+	"os"
 	"os/exec"
 
 	"github.com/kr/pty"
@@ -18,6 +21,8 @@ type SessionWriter struct {
 func (s *SessionWriter) Write(p []byte) (int, error) {
 	res := &SessionResponse{Message: string(p)}
 	err := s.session.Send(res)
+	log.Printf("Write string : %v", res)
+
 	if err != nil {
 		return 0, err
 	}
@@ -29,8 +34,14 @@ func (s *SessionWriter) Write(p []byte) (int, error) {
 func (*Service) Session(session Terminal_SessionServer) error {
 	logrus.Info("Session created")
 
-	c := exec.Command("bash")
-	c.Env = append([]string{})
+	c := exec.Command("/bin/zsh")
+	env := os.Environ()
+	env = append(env, fmt.Sprint("TERM=linux"))
+	env = append(env, fmt.Sprint("HISTSIZE=10000"))
+	env = append(env, fmt.Sprint("HOME=/home/monkey"))
+	env = append(env, fmt.Sprint("USER=monkey"))
+	env = append(env, fmt.Sprint("PWD=/home/monkey"))
+	c.Env = env
 	ptmx, err := pty.Start(c)
 	if err != nil {
 		return err
@@ -66,6 +77,7 @@ func (*Service) Session(session Terminal_SessionServer) error {
 		case *SessionRequest_Message:
 			{
 				msg := command.Message
+				log.Printf("Request string : %v", msg)
 				logrus.Debugf("Request string : %v", msg)
 				_, err := ptmx.Write([]byte(msg))
 				if err != nil {

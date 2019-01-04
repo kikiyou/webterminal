@@ -82,6 +82,7 @@ func runServer() {
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
+	rootCmd.AddCommand(clientCmd)
 
 	// Here you will define your flags and configuration settings.
 
