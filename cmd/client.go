@@ -37,35 +37,6 @@ func runClient() {
 	// r, err := c.Ping(ctx, &pb.PingRequest{Value: "Hello, World!"})
 	c := terminal.NewTerminalClient(conn)
 	stream, err := c.Session(context.Background())
-	// bb := &terminal.SessionRequest{
-	// 	Command: &terminal.SessionRequest_Message{"ls /"},
-	// }
-	// err = stream.Send(bb)
-	// if err != nil {
-	// 	s := gstatus.Convert(err)
-	// 	// log.Printf("pingCheck Error: %s", s.Message())
-	// 	fmt.Sprintf("send Error: %s", s.Message())
-	// }
-	// for {
-
-	// 	resp, err := stream.Recv()
-	// 	log.Println("111")
-
-	// 	if err != nil {
-	// 		if err == io.EOF {
-	// 			break
-	// 		}
-	// 		s := gstatus.Convert(err)
-	// 		// log.Printf("pingCheck Error: %s", s.Message())
-	// 		fmt.Sprintf("Recv Error: %s", s.Message())
-	// 		break
-	// 	}
-
-	// 	log.Println("in", string(resp.Message))
-	// 	log.Println("222")
-
-	// }
-
 	// 启动一个 goroutine 接收命令行输入的指令
 	go func() {
 		log.Println("请输入消息...")

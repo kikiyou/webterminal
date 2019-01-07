@@ -34,7 +34,7 @@ func (s *SessionWriter) Write(p []byte) (int, error) {
 func (*Service) Session(session Terminal_SessionServer) error {
 	logrus.Info("Session created")
 
-	c := exec.Command("/bin/zsh")
+	c := exec.Command(os.Getenv("SHELL"))
 	env := os.Environ()
 	env = append(env, fmt.Sprint("TERM=linux"))
 	env = append(env, fmt.Sprint("HISTSIZE=10000"))
