@@ -1,8 +1,8 @@
 package cmd
 
 import (
+	"bytes"
 	"context"
-	"fmt"
 	"io"
 	"log"
 	"os"
@@ -103,7 +103,9 @@ func runClient() {
 			log.Println("接收数据出错:", err)
 		}
 		// 没有错误的情况下，打印来自服务端的消息
-		fmt.Printf(string(resp.Message))
+		// fmt.Printf(string(resp.Message))
+		io.Copy(os.Stdout, bytes.NewBuffer(resp.Message))
+
 		// }
 		// if _, err := io.Copy(os.Stdout, resp.Message); err != nil {
 		// 	fmt.Println(err)
