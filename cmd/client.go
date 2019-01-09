@@ -6,9 +6,12 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/overmike/webterminal/terminal"
 	"github.com/spf13/cobra"
+	sshterminal "golang.org/x/crypto/ssh/terminal"
 	"google.golang.org/grpc"
 )
 
@@ -59,12 +62,49 @@ func runClient() {
 	c := terminal.NewTerminalClient(conn)
 	stream, err := c.Session(context.Background())
 	session := newSession(stream)
+
 	log.Println("请输入消息...")
+
+	sig := make(chan os.Signal, 2)
+	signal.Notify(sig, syscall.SIGWINCH, syscall.SIGCLD)
+	go func() {
+		for {
+			select {
+			case _ = <-sig:
+				width, height, err := sshterminal.GetSize(0)
+				tsize := terminal.TerminalResize{
+					Columns: int32(width),
+					Rows:    int32(height),
+				}
+				err = stream.Send(&terminal.SessionRequest{
+					Command: &terminal.SessionRequest_Resize{Resize: &tsize},
+				})
+				if err != nil {
+					log.Println("TerminalResize: ", err)
+				}
+			}
+
+		}
+	}()
 
 	go func() { io.Copy(session, os.Stdin) }()
 	// go func() { io.Copy(os.Stdout, session) }()
 
 	for {
+
+		// switch <-sig {
+		// case syscall.SIGWINCH:
+		// 	width, height, err := sshterminal.GetSize(0)
+		// 	tsize := terminal.TerminalResize{
+		// 		Columns: int32(width),
+		// 		Rows:    int32(height),
+		// 	}
+		// 	err = stream.Send(&terminal.SessionRequest{
+		// 		Command: &terminal.SessionRequest_Resize{Resize: &tsize},
+		// 	})
+		// 	log.Println("TerminalResize: ", err)
+
+		// default:
 		// 接收从 服务端返回的数据流
 		resp, err := stream.Recv()
 		if err == io.EOF {
@@ -77,6 +117,8 @@ func runClient() {
 		}
 		// 没有错误的情况下，打印来自服务端的消息
 		fmt.Printf(resp.Message)
+		// }
+
 	}
 
 }
