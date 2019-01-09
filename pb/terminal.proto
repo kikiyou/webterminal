@@ -1,5 +1,5 @@
 syntax = "proto3";
-import "google/api/annotations.proto";
+// import "google/api/annotations.proto";
 
 package terminal;
 
@@ -10,17 +10,17 @@ message TerminalResize {
 
 message SessionRequest {
     oneof command {
-        string message = 1;
+        bytes message = 1;
         TerminalResize resize = 2;
     }
 }
 
 message SessionResponse {
-    string message = 1;
+    bytes message = 1;
 }
 
 service terminal {
     rpc Session (stream SessionRequest) returns (stream SessionResponse) {
-        option (google.api.http) = {get: "/terminal"};
+        // option (google.api.http) = {get: "/terminal"};
     }
 }

@@ -19,7 +19,7 @@ type SessionWriter struct {
 }
 
 func (s *SessionWriter) Write(p []byte) (int, error) {
-	res := &SessionResponse{Message: string(p)}
+	res := &SessionResponse{Message: p}
 	err := s.session.Send(res)
 	log.Printf("Write string : %v", res)
 
@@ -79,7 +79,7 @@ func (*Service) Session(session Terminal_SessionServer) error {
 				msg := command.Message
 				log.Printf("Request string : %v", msg)
 				logrus.Debugf("Request string : %v", msg)
-				_, err := ptmx.Write([]byte(msg))
+				_, err := ptmx.Write(msg)
 				if err != nil {
 					return err
 				}

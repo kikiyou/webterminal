@@ -36,7 +36,7 @@ func newSession(s terminal.Terminal_SessionClient) *Session {
 
 func (s *Session) Write(p []byte) (int, error) {
 	err := s.session.Send(&terminal.SessionRequest{
-		Command: &terminal.SessionRequest_Message{string(p)},
+		Command: &terminal.SessionRequest_Message{p},
 	})
 	if err != nil {
 		return 0, err
@@ -53,7 +53,7 @@ func (s *Session) Write(p []byte) (int, error) {
 // }
 
 func runClient() {
-	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("无法连接到 Server %v", err)
 	}
@@ -88,24 +88,11 @@ func runClient() {
 	}()
 
 	go func() { io.Copy(session, os.Stdin) }()
+	// go func() { io.Copy(session, os.Stderr) }()
+
 	// go func() { io.Copy(os.Stdout, session) }()
-
+	// proverbs := new(bytes.Buffer)
 	for {
-
-		// switch <-sig {
-		// case syscall.SIGWINCH:
-		// 	width, height, err := sshterminal.GetSize(0)
-		// 	tsize := terminal.TerminalResize{
-		// 		Columns: int32(width),
-		// 		Rows:    int32(height),
-		// 	}
-		// 	err = stream.Send(&terminal.SessionRequest{
-		// 		Command: &terminal.SessionRequest_Resize{Resize: &tsize},
-		// 	})
-		// 	log.Println("TerminalResize: ", err)
-
-		// default:
-		// 接收从 服务端返回的数据流
 		resp, err := stream.Recv()
 		if err == io.EOF {
 			log.Println("⚠️ 收到服务端的结束信号")
@@ -116,9 +103,12 @@ func runClient() {
 			log.Println("接收数据出错:", err)
 		}
 		// 没有错误的情况下，打印来自服务端的消息
-		fmt.Printf(resp.Message)
+		fmt.Printf(string(resp.Message))
 		// }
-
+		// if _, err := io.Copy(os.Stdout, resp.Message); err != nil {
+		// 	fmt.Println(err)
+		// 	os.Exit(1)
+		// }
 	}
 
 }
