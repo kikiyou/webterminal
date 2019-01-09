@@ -1,7 +1,6 @@
 package terminal
 
 import (
-	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -78,9 +77,6 @@ func (*Service) Session(session Terminal_SessionServer) error {
 		case *SessionRequest_Message:
 			{
 				msg := command.Message
-				if bytes.Equal(msg, []byte{4}) {
-					log.Printf("exit : %v", msg)
-				}
 				log.Printf("Request string : %v", msg)
 				logrus.Debugf("Request string : %v", msg)
 				_, err := ptmx.Write(msg)

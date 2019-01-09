@@ -35,6 +35,7 @@ func newSession(s terminal.Terminal_SessionClient) *Session {
 }
 
 func (s *Session) Write(p []byte) (int, error) {
+	// Crtl+D 关闭
 	if bytes.Equal(p, []byte{4}) {
 		// log.Printf("exit : %v", p)
 		s.session.CloseSend()
