@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -23,11 +22,33 @@ var clientCmd = &cobra.Command{
 	},
 }
 
-type mss struct{}
+type Session struct {
+	session terminal.Terminal_SessionClient
+	reader  io.Reader
+}
 
-// func (m *mss) isSessionRequest_Command() {
-// 	return "ls -l"
+func newSession(s terminal.Terminal_SessionClient) *Session {
+	return &Session{session: s}
+}
+
+func (s *Session) Write(p []byte) (int, error) {
+	err := s.session.Send(&terminal.SessionRequest{
+		Command: &terminal.SessionRequest_Message{string(p)},
+	})
+	if err != nil {
+		return 0, err
+	}
+	return len(p), err
+}
+
+// func (s *Session) Reader(p []byte) (int, error) {
+// 	n, err := s.reader.Read(p)
+// 	if err != nil {
+// 		return n, err
+// 	}
+// 	buf := make([]byte, n)
 // }
+
 func runClient() {
 	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
 	if err != nil {
@@ -37,21 +58,12 @@ func runClient() {
 	// r, err := c.Ping(ctx, &pb.PingRequest{Value: "Hello, World!"})
 	c := terminal.NewTerminalClient(conn)
 	stream, err := c.Session(context.Background())
-	// 启动一个 goroutine 接收命令行输入的指令
-	go func() {
-		log.Println("请输入消息...")
-		input := bufio.NewReader(os.Stdin)
-		for {
-			// 获取 命令行输入的字符串， 以回车 \n 作为结束标志
-			inmsg, _ := input.ReadString('\n')
-			// 向服务端发送 指令
-			if err := stream.Send(&terminal.SessionRequest{
-				Command: &terminal.SessionRequest_Message{inmsg},
-			}); err != nil {
-				return
-			}
-		}
-	}()
+	session := newSession(stream)
+	log.Println("请输入消息...")
+
+	go func() { io.Copy(session, os.Stdin) }()
+	// go func() { io.Copy(os.Stdout, session) }()
+
 	for {
 		// 接收从 服务端返回的数据流
 		resp, err := stream.Recv()
