@@ -35,7 +35,11 @@ func newSession(s terminal.Terminal_SessionClient) *Session {
 }
 
 func (s *Session) Write(p []byte) (int, error) {
-	// log.Println("输入数据", p)
+	if bytes.Equal(p, []byte{4}) {
+		// log.Printf("exit : %v", p)
+		s.session.CloseSend()
+	}
+
 	err := s.session.Send(&terminal.SessionRequest{
 		Command: &terminal.SessionRequest_Message{p},
 	})
@@ -106,10 +110,12 @@ func runClient() {
 		}
 		if err != nil {
 			// TODO: 处理接收错误
-			log.Println("接收数据出错:", err)
+			log.Println("关闭连接:", err)
+			os.Exit(0)
 		}
-		// 没有错误的情况下，打印来自服务端的消息
-		// fmt.Printf(string(resp.Message))
+
+		// // 没有错误的情况下，打印来自服务端的消息
+		// fmt.Println(resp.Message)
 		io.Copy(os.Stdout, bytes.NewBuffer(resp.Message))
 	}
 
