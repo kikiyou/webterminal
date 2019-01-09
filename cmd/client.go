@@ -35,6 +35,7 @@ func newSession(s terminal.Terminal_SessionClient) *Session {
 }
 
 func (s *Session) Write(p []byte) (int, error) {
+	// log.Println("输入数据", p)
 	err := s.session.Send(&terminal.SessionRequest{
 		Command: &terminal.SessionRequest_Message{p},
 	})
@@ -53,7 +54,7 @@ func (s *Session) Write(p []byte) (int, error) {
 // }
 
 func runClient() {
-	conn, err := grpc.Dial("127.0.0.1:50051", grpc.WithInsecure())
+	conn, err := grpc.Dial("172.16.6.66:50051", grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("无法连接到 Server %v", err)
 	}
@@ -67,6 +68,13 @@ func runClient() {
 
 	sig := make(chan os.Signal, 2)
 	signal.Notify(sig, syscall.SIGWINCH, syscall.SIGCLD)
+
+	oldState, err := sshterminal.MakeRaw(0)
+	if err != nil {
+		return
+	}
+	defer sshterminal.Restore(0, oldState)
+
 	go func() {
 		for {
 			select {
@@ -90,8 +98,6 @@ func runClient() {
 	go func() { io.Copy(session, os.Stdin) }()
 	// go func() { io.Copy(session, os.Stderr) }()
 
-	// go func() { io.Copy(os.Stdout, session) }()
-	// proverbs := new(bytes.Buffer)
 	for {
 		resp, err := stream.Recv()
 		if err == io.EOF {
@@ -105,12 +111,6 @@ func runClient() {
 		// 没有错误的情况下，打印来自服务端的消息
 		// fmt.Printf(string(resp.Message))
 		io.Copy(os.Stdout, bytes.NewBuffer(resp.Message))
-
-		// }
-		// if _, err := io.Copy(os.Stdout, resp.Message); err != nil {
-		// 	fmt.Println(err)
-		// 	os.Exit(1)
-		// }
 	}
 
 }
